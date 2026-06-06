@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPO Vault - Agent Login</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            animation: fadeIn 0.4s ease;
+        }
+        .auth-card {
+            padding: 2.5rem 2rem;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .auth-header .logo {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.3));
+        }
+        .auth-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .auth-toggle {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .auth-toggle span {
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .auth-toggle span:hover {
+            color: var(--primary-hover);
+        }
+        .register-panel {
+            display: none;
+        }
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--accent-red);
+            color: #ffffff;
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        .success-banner {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--primary);
+            color: #ffffff;
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        .password-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input-container input {
+            padding-right: 40px !important;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: var(--transition-fast);
+        }
+        .password-toggle-btn:hover {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Login Card -->
+        <div class="card glass-card auth-card" id="auth-card">
+            
+            <!-- Error / Success Alert Banners -->
+            <div class="error-banner" id="error-alert">Incorrect Credentials. Try again.</div>
+            <div class="success-banner" id="success-alert">Success! Redirecting...</div>
+
+            <!-- LOGIN PANEL -->
+            <div class="login-panel" id="login-panel">
+                <div class="auth-header">
+                    <span class="logo">🎧</span>
+                    <h2>BPO Vault Login</h2>
+                    <p>Enter BPO floor credentials to access dashboard</p>
+                </div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" placeholder="E.g., sneha_sharma" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Log In to Floor</button>
+                </form>
+                <div class="auth-toggle">
+                    Don't have an agent profile? <span id="to-register">Register Profile</span>
+                </div>
+            </div>
+
+            <!-- REGISTRATION PANEL -->
+            <div class="register-panel" id="register-panel">
+                <div class="auth-header">
+                    <span class="logo">🎧</span>
+                    <h2>Register Floor Agent</h2>
+                    <p>Create your agent profile to access activities</p>
+                </div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="reg-name">Full Name</label>
+                        <input type="text" id="reg-name" placeholder="E.g., Sneha Sharma" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-employee-id">Employee ID (Office Code)</label>
+                        <input type="text" id="reg-employee-id" placeholder="E.g., EMP1024" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-username">Username</label>
+                        <input type="text" id="reg-username" placeholder="E.g., sneha_sharma (unique)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="reg-password" placeholder="••••••••" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('reg-password', this)">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-confirm-password">Confirm Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="reg-confirm-password" placeholder="••••••••" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('reg-confirm-password', this)">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Create Agent Profile</button>
+                </form>
+                <div class="auth-toggle">
+                    Already registered? <span id="to-login">Log In instead</span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // Authentication page scripts
+        const toRegister = document.getElementById('to-register');
+        const toLogin = document.getElementById('to-login');
+        const loginPanel = document.getElementById('login-panel');
+        const registerPanel = document.getElementById('register-panel');
+        const errorAlert = document.getElementById('error-alert');
+        const successAlert = document.getElementById('success-alert');
+
+        toRegister.addEventListener('click', () => {
+            loginPanel.style.display = 'none';
+            registerPanel.style.display = 'block';
+            hideAlerts();
+        });
+
+        toLogin.addEventListener('click', () => {
+            registerPanel.style.display = 'none';
+            loginPanel.style.display = 'block';
+            hideAlerts();
+        });
+
+        function hideAlerts() {
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+        }
+
+        function showAlert(type, msg) {
+            hideAlerts();
+            const alert = type === 'error' ? errorAlert : successAlert;
+            alert.innerText = msg;
+            alert.style.display = 'block';
+        }
+
+        // Check if already authenticated, redirect
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+        if (token) {
+            window.location.href = '/index.html';
+        }
+
+        // Handle Login Submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showAlert('success', 'Logged in successfully! Redirecting...');
+                    // Save token and username to sessionStorage
+                    sessionStorage.setItem('token', data.token);
+                    sessionStorage.setItem('username', data.user.username);
+                    sessionStorage.setItem('name', data.user.name);
+                    sessionStorage.setItem('role', data.user.role);
+                    sessionStorage.setItem('avatar', data.user.avatar);
+                    sessionStorage.setItem('isAdmin', data.user.isAdmin ? 'true' : 'false');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 800);
+                } else {
+                    showAlert('error', data.message || 'Login failed');
+                }
+            } catch (err) {
+                showAlert('error', 'Server error. Connection refused.');
+            }
+        });
+
+        // Handle Registration Submission
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const employeeId = document.getElementById('reg-employee-id').value;
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                showAlert('error', 'Passwords do not match. Please verify!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, username, password, employeeId })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showAlert('success', 'Registration complete! Switching to Login panel...');
+                    setTimeout(() => {
+                        document.getElementById('register-form').reset();
+                        registerPanel.style.display = 'none';
+                        loginPanel.style.display = 'block';
+                        hideAlerts();
+                    }, 1200);
+                } else {
+                    showAlert('error', data.message || 'Registration failed');
+                }
+            } catch (err) {
+                showAlert('error', 'Server error. Connection refused.');
+            }
+        });
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = '<i data-lucide="eye-off"></i>';
+            } else {
+                input.type = 'password';
+                btn.innerHTML = '<i data-lucide="eye"></i>';
+            }
+            lucide.createIcons();
+        }
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

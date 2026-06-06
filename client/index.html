@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPO Vault - Call Center Group Hub</title>
+    <!-- Authentication Guard -->
+    <script>
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <!-- Style Sheets -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container">
+        <!-- Sidebar/Navbar -->
+        <header class="glass-nav">
+            <div class="nav-brand">
+                <span class="emoji-logo">🎧</span>
+                <div class="brand-text">
+                    <h1>BPO Vault</h1>
+                    <p>ACW, CSAT & Floor Gossip</p>
+                </div>
+            </div>
+            
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="vault">
+                    <i data-lucide="smile"></i>
+                    <span>BPO Vault</span>
+                </button>
+                <button class="nav-tab" data-tab="hangout">
+                    <i data-lucide="pizza"></i>
+                    <span>Shift Planner</span>
+                </button>
+                <button class="nav-tab" data-tab="wall">
+                    <i data-lucide="trophy"></i>
+                    <span>Wall of Fame</span>
+                </button>
+                <button class="nav-tab" data-tab="tea">
+                    <i data-lucide="message-square-dashed"></i>
+                    <span>Tea Box</span>
+                </button>
+            </nav>
+
+            <div class="nav-profile-card">
+                <div class="profile-info">
+                    <span id="user-avatar" class="avatar-sm">💻</span>
+                    <div class="profile-meta">
+                        <span id="user-fullname" class="name">Agent Name</span>
+                        <span id="user-role" class="role">UK Billing Queue</span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn btn-sm btn-secondary" id="admin-panel-btn" style="display: none; width: 100%; margin-bottom: 6px;">
+                        <i data-lucide="settings"></i> Admin Panel
+                    </button>
+                    <button class="btn btn-sm btn-secondary" id="logout-btn" style="width: 100%;">
+                        <i data-lucide="log-out"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-footer">
+                <span class="status-indicator online"></span>
+                <span class="user-display" id="floor-status">Connecting to Floor...</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace Area -->
+        <main class="main-content">
+            <!-- TAB 1: BPO VAULT -->
+            <section id="vault-tab" class="tab-pane active">
+                <div class="pane-header">
+                    <h2>🎧 The BPO Vault</h2>
+                    <p>Inside jokes, escalation quotes, and night-shift catchphrase soundboards.</p>
+                </div>
+
+                <div class="vault-grid">
+                    <!-- Column 1: Quotes & Soundboard -->
+                    <div class="vault-col-left">
+                        <!-- Quote of the Week Panel -->
+                        <div class="card glass-card quote-section">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="quote"></i>
+                                    <h3>Escalation Quote of the Week</h3>
+                                </div>
+                                <button class="btn btn-sm btn-primary" id="add-quote-btn">
+                                    <i data-lucide="plus"></i> Nominate Quote
+                                </button>
+                            </div>
+                            <div class="quote-display-container">
+                                <div class="quote-slider" id="quote-slider">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Soundboard Panel -->
+                        <div class="card glass-card soundboard-section">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="volume-2"></i>
+                                    <h3>Shift Catchphrase Soundboard</h3>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" id="add-catchphrase-btn">
+                                    <i data-lucide="plus"></i> Add Catchphrase
+                                </button>
+                            </div>
+                            <p class="section-subtitle">BPO agents ke takiya-kalam suno ya custom add karo! Click any catchphrase to play.</p>
+                            <div class="sound-grid" id="soundboard-grid">
+                                <!-- Dynamic catchphrase buttons -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Meme Grid -->
+                    <div class="vault-col-right">
+                        <div class="card glass-card meme-section">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="image"></i>
+                                    <h3>BPO Meme Gallery</h3>
+                                </div>
+                                <div class="header-actions">
+                                    <label for="meme-upload" class="btn btn-sm btn-primary">
+                                        <i data-lucide="upload"></i> Upload Meme
+                                    </label>
+                                    <input type="file" id="meme-upload" accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                            <div class="meme-grid" id="meme-gallery-grid">
+                                <!-- Dynamic meme elements -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: SHIFT & HANGOUT PLANNER -->
+            <section id="hangout-tab" class="tab-pane">
+                <div class="pane-header">
+                    <h2>🍕 Shift & Hangout Planner</h2>
+                    <p>Dinner sponsor wheels (night shift), anonymous lunch polls, and logout countdowns.</p>
+                </div>
+
+                <div class="planner-grid">
+                    <!-- Column 1: Spin the Wheel -->
+                    <div class="planner-col-left">
+                        <div class="card glass-card wheel-section">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="dices"></i>
+                                    <h3>Chai/Samosa Sponsor Wheel</h3>
+                                </div>
+                            </div>
+                            <div class="wheel-content-wrapper">
+                                <div class="wheel-box">
+                                    <div class="wheel-pointer"></div>
+                                    <canvas id="wheel-canvas" width="360" height="360"></canvas>
+                                    <button class="spin-btn" id="spin-btn">SPIN</button>
+                                </div>
+                                <div class="wheel-controls">
+                                    <div class="wheel-trigger-meta" id="wheel-trigger-meta" style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-bottom: 6px;"></div>
+                                    <h4>Who's in the Queue?</h4>
+                                    <div class="chips-container" id="wheel-participants">
+                                        <!-- Dynamic tags -->
+                                    </div>
+                                    <div class="wheel-result-banner" id="wheel-result-banner">
+                                        Spin to choose the sponsor!
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Polls & Countdowns -->
+                    <div class="planner-col-right">
+                        <!-- Voting System -->
+                        <div class="card glass-card poll-section">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="vote"></i>
+                                    <h3>Dinner/Lunch Poll (Anonymous)</h3>
+                                </div>
+                                <button class="btn btn-sm btn-primary" id="create-poll-btn">
+                                    <i data-lucide="plus"></i> New Poll
+                                </button>
+                            </div>
+                            <div id="polls-container">
+                                <!-- Dynamic Polls -->
+                            </div>
+                        </div>
+
+                        <!-- Countdowns -->
+                        <div class="card glass-card countdown-section">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="hourglass"></i>
+                                    <h3>Important Shift Countdowns</h3>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" id="add-countdown-btn">
+                                    <i data-lucide="plus"></i> Add Event
+                                </button>
+                            </div>
+                            <div class="countdown-grid" id="countdown-container">
+                                <!-- Dynamic Countdowns -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: WALL OF FAME & SHAME -->
+            <section id="wall-tab" class="tab-pane">
+                <div class="pane-header">
+                    <h2>🏆 BPO Wall of Fame & Shame</h2>
+                    <p>Dynamic awards, agent profile cards, and peer nominations.</p>
+                </div>
+
+                <div class="wall-grid">
+                    <!-- Column 1: Leaderboard -->
+                    <div class="wall-col-left">
+                        <div class="card glass-card leaderboard-card">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="medal"></i>
+                                    <h3>BPO Floor Leaderboard</h3>
+                                </div>
+                            </div>
+                            <div class="leaderboard-tabs">
+                                <button class="leaderboard-tab-btn active" data-category="late">Late Loggers</button>
+                                <button class="leaderboard-tab-btn" data-category="sleeper">Desk Sleepers</button>
+                                <button class="leaderboard-tab-btn" data-category="chai">Chai Breaks</button>
+                                <button class="leaderboard-tab-btn" data-category="excel">AHT Champions</button>
+                            </div>
+                            <div class="leaderboard-content">
+                                <div class="leaderboard-list" id="leaderboard-list">
+                                    <!-- Dynamic leaderboard rows -->
+                                </div>
+                                <div class="nominate-box">
+                                    <h4>Nominate a coworker for this title:</h4>
+                                    <form id="nominate-form" class="inline-form">
+                                        <select id="nominate-select" required>
+                                            <option value="" disabled selected>Select coworker...</option>
+                                            <!-- Dynamic options -->
+                                        </select>
+                                        <button class="btn btn-primary" type="submit">Nominate / Vote</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Profile Cards -->
+                    <div class="wall-col-right">
+                        <div class="card glass-card profiles-container-card">
+                            <div class="card-header">
+                                <div class="title-with-icon">
+                                    <i data-lucide="users"></i>
+                                    <h3>Agent Profile Cards</h3>
+                                </div>
+                            </div>
+                            <div class="profiles-grid" id="profiles-grid">
+                                <!-- Dynamic profile cards -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: THE ANONYMOUS TEA BOX -->
+            <section id="tea-tab" class="tab-pane">
+                <!-- Lock overlay -->
+                <div class="tea-lock-overlay" id="tea-lock-overlay">
+                    <div class="lock-box glass-card">
+                        <div class="lock-icon">
+                            <i data-lucide="lock"></i>
+                        </div>
+                        <h3>Private Confession Box</h3>
+                        <p>Bina apna naam bataye call center gossip aur floor secrets share karein. Enter the group password to enter.</p>
+                        <form id="password-form">
+                            <input type="password" id="tea-password" placeholder="Password (default is 'chai')..." required autocomplete="off">
+                            <button type="submit" class="btn btn-primary btn-block">Unlock Tea Box</button>
+                            <p class="error-msg" id="password-error">Incorrect password. Hint: It's 'chai'.</p>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Unlocked Content -->
+                <div class="tea-unlocked-content" id="tea-unlocked-content">
+                    <div class="pane-header confessions-header">
+                        <div>
+                            <h2>🤫 The Anonymous "Tea" Box</h2>
+                            <p>Floor confessions, funny observations, aur QA gossip. Shhh! TL ko batana mat.</p>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" id="add-confession-btn">
+                                <i data-lucide="plus"></i> Spill the Tea
+                            </button>
+                            <button class="btn btn-sm btn-secondary" id="lock-tea-box-btn">
+                                <i data-lucide="lock"></i> Lock Box
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter buttons -->
+                    <div class="confession-filters">
+                        <button class="filter-btn active" data-filter="all">All Tea</button>
+                        <button class="filter-btn" data-filter="gossip">🤫 Gossip</button>
+                        <button class="filter-btn" data-filter="rant">😡 Rant</button>
+                        <button class="filter-btn" data-filter="chai">☕ Chai Pe Charcha</button>
+                        <button class="filter-btn" data-filter="funny">😂 Funny</button>
+                    </div>
+
+                    <div class="confessions-masonry" id="confessions-board">
+                        <!-- Dynamic post-it notes -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: Nominate Quote -->
+    <div class="modal-overlay" id="add-quote-modal">
+        <div class="modal-box glass-card">
+            <div class="modal-header">
+                <h3>Nominate Floor Quote</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="quote-form">
+                <div class="form-group">
+                    <label for="quote-text">What was said?</label>
+                    <textarea id="quote-text" placeholder="E.g., 'Sir, please stay on line, my system is loading...' (Actually eating samosa on hold)" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quote-speaker">Who said it?</label>
+                    <input type="text" id="quote-speaker" placeholder="E.g., Rohan, TL, QA, etc." required>
+                </div>
+                <div class="form-group">
+                    <label for="quote-context">Context / Queue (Optional)</label>
+                    <input type="text" id="quote-context" placeholder="E.g., Billing Queue, Shift 3">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add Quote</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CATCHPHRASE -->
+    <div class="modal-overlay" id="add-catchphrase-modal">
+        <div class="modal-box glass-card">
+            <div class="modal-header">
+                <h3>Add Agent's Catchphrase</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="catchphrase-form">
+                <div class="form-group">
+                    <label for="catch-phrase">Catchphrase</label>
+                    <input type="text" id="catch-phrase" placeholder="E.g., 'Bhai, customer ko hold pe daal!'" required>
+                </div>
+                <div class="form-group">
+                    <label for="catch-speaker">Who says this?</label>
+                    <input type="text" id="catch-speaker" placeholder="E.g., Aman, Sameer, etc." required>
+                </div>
+                <div class="form-group row">
+                    <div class="col">
+                        <label for="catch-pitch">Voice Pitch</label>
+                        <input type="range" id="catch-pitch" min="0.5" max="2.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="col">
+                        <label for="catch-speed">Voice Speed</label>
+                        <input type="range" id="catch-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="catch-effect">Built-in Sound Effect (Optional)</label>
+                    <select id="catch-effect">
+                        <option value="none">Speech Only</option>
+                        <option value="tada">🎉 Tada Sparkle</option>
+                        <option value="fail">🎺 Fail Trombone</option>
+                        <option value="bell">🔔 Office Desk Bell</option>
+                        <option value="laughter">😂 Laughter Tracks</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Create Sound Button</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE POLL -->
+    <div class="modal-overlay" id="create-poll-modal">
+        <div class="modal-box glass-card">
+            <div class="modal-header">
+                <h3>Create New Shift/Dinner Poll</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="poll-form">
+                <div class="form-group">
+                    <label for="poll-question">Poll Question</label>
+                    <input type="text" id="poll-question" placeholder="E.g., Shift end par kahan khane chalein?" required>
+                </div>
+                <div class="form-group" id="poll-options-inputs">
+                    <label>Options</label>
+                    <input type="text" class="poll-option-input" placeholder="Option 1" required>
+                    <input type="text" class="poll-option-input" placeholder="Option 2" required>
+                </div>
+                <button type="button" class="btn btn-sm btn-secondary" id="add-poll-option-input-btn" style="margin-bottom: 1rem;">
+                    <i data-lucide="plus"></i> Add Option
+                </button>
+                <button type="submit" class="btn btn-primary btn-block">Publish Poll</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD COUNTDOWN -->
+    <div class="modal-overlay" id="add-countdown-modal">
+        <div class="modal-box glass-card">
+            <div class="modal-header">
+                <h3>Add Countdown Event</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="countdown-form">
+                <div class="form-group">
+                    <label for="event-name">Event Name</label>
+                    <input type="text" id="event-name" placeholder="E.g., Next Incentive Credit Day" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-date">Target Date & Time</label>
+                    <input type="datetime-local" id="event-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-emoji">Emoji Icon</label>
+                    <select id="event-emoji">
+                        <option value="🚀">🚀 Incentive / Salary</option>
+                        <option value="🎉">🎉 Shift End / Party</option>
+                        <option value="🌴">🌴 Weekly Offs / Vacation</option>
+                        <option value="🍕">🍕 Dinner Party</option>
+                        <option value="😴">😴 Sleep / Weekly Holiday</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add Countdown</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: SPILL THE TEA CONFESSION -->
+    <div class="modal-overlay" id="add-confession-modal">
+        <div class="modal-box glass-card">
+            <div class="modal-header">
+                <h3>Spill the Tea (Confession)</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="confession-form">
+                <div class="form-group">
+                    <label for="confession-type">Confession Tag</label>
+                    <select id="confession-type" required>
+                        <option value="gossip">🤫 Gossip</option>
+                        <option value="rant">😡 Rant</option>
+                        <option value="chai">☕ Chai Pe Charcha</option>
+                        <option value="funny">😂 Funny Observation</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="confession-text">Anonymous Note</label>
+                    <textarea id="confession-text" placeholder="Bina kisi dar ke floor gossip likhdo... quality check nahi hoga!" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="confession-color">Choose Note Color</label>
+                    <div class="color-picker-grid">
+                        <label><input type="radio" name="note-color" value="#ffd54f" checked><span style="background-color: #ffd54f;"></span></label>
+                        <label><input type="radio" name="note-color" value="#ff8a80"><span style="background-color: #ff8a80;"></span></label>
+                        <label><input type="radio" name="note-color" value="#81c784"><span style="background-color: #81c784;"></span></label>
+                        <label><input type="radio" name="note-color" value="#4fc3f7"><span style="background-color: #4fc3f7;"></span></label>
+                        <label><input type="radio" name="note-color" value="#ba68c8"><span style="background-color: #ba68c8;"></span></label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Post Confession</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT MY PROFILE -->
+    <div class="modal-overlay" id="edit-profile-modal">
+        <div class="modal-box glass-card">
+            <div class="modal-header">
+                <h3>Edit My Agent Profile Card</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <form id="edit-profile-form">
+                <div class="form-group">
+                    <label for="edit-profile-name">Full Name</label>
+                    <input type="text" id="edit-profile-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-profile-role">Designation / Process</label>
+                    <input type="text" id="edit-profile-role" required>
+                </div>
+                <div class="form-group">
+                    <label>Choose Avatar Style</label>
+                    <div class="avatar-select-grid">
+                        <label><input type="radio" name="edit-avatar" value="💻" checked><span>💻 Agent</span></label>
+                        <label><input type="radio" name="edit-avatar" value="😴"><span>😴 Sleeper</span></label>
+                        <label><input type="radio" name="edit-avatar" value="📈"><span>📈 QA Analyst</span></label>
+                        <label><input type="radio" name="edit-avatar" value="🍕"><span>🍕 Foodie</span></label>
+                        <label><input type="radio" name="edit-avatar" value="☕"><span>☕ Chai Addict</span></label>
+                        <label><input type="radio" name="edit-avatar" value="🔥"><span>🔥 High Perf</span></label>
+                        <label><input type="radio" name="edit-avatar" value="💅"><span>💅 Gossip Qn</span></label>
+                        <label><input type="radio" name="edit-avatar" value="🕶️"><span>🕶️ TL</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-profile-superpower">Superpower</label>
+                    <input type="text" id="edit-profile-superpower" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-profile-weakness">Weakness</label>
+                    <input type="text" id="edit-profile-weakness" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Core App JS -->
+    <script src="app.js"></script>
+</body>
+</html>

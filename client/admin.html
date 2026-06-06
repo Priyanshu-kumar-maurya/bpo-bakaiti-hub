@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPO Vault - Admin Moderation Panel</title>
+    <!-- Authentication & Admin Guards -->
+    <script>
+        const token = sessionStorage.getItem('token');
+        const isAdmin = sessionStorage.getItem('isAdmin');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        if (isAdmin !== 'true') {
+            alert("Unauthorized! Redirecting to floor...");
+            window.location.href = '/index.html';
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Style Sheets -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 1.5rem;
+        }
+        .admin-header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #ffffff 30%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 1.75rem;
+        }
+        .stat-val {
+            font-size: 2.5rem;
+            font-family: var(--font-heading);
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        .stat-lbl {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .admin-section {
+            margin-bottom: 2rem;
+        }
+        .admin-section-header {
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-section-header h3 {
+            font-size: 1.3rem;
+        }
+        .admin-section-header i {
+            color: var(--primary);
+            width: 20px;
+            height: 20px;
+        }
+        /* Admin Tables */
+        .table-responsive {
+            overflow-x: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: #ffffff;
+            font-family: var(--font-heading);
+            font-weight: 600;
+        }
+        tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .btn-danger {
+            background: var(--accent-red);
+            color: #ffffff;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        .meme-preview-img {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            border: 1px solid var(--card-border);
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        
+        <!-- Admin Header -->
+        <header class="admin-header">
+            <div>
+                <h1>🔑 BPO Floor Control Panel</h1>
+                <p>Monitor metrics and moderate floor activity details</p>
+            </div>
+            <a href="/index.html" class="btn btn-secondary">
+                <i data-lucide="arrow-left"></i> Return to Floor
+            </a>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="admin-stats-grid">
+            <div class="card glass-card stat-card">
+                <div class="stat-val" id="stat-agents">0</div>
+                <div class="stat-lbl">Floor Agents Registered</div>
+            </div>
+            <div class="card glass-card stat-card">
+                <div class="stat-val" id="stat-confessions">0</div>
+                <div class="stat-lbl">Total Gossip Confessions</div>
+            </div>
+            <div class="card glass-card stat-card">
+                <div class="stat-val" id="stat-sockets" style="color: var(--accent-gold);">0</div>
+                <div class="stat-lbl">Active Logged-In Connections</div>
+            </div>
+        </div>
+
+        <!-- Moderation Sections -->
+        <main>
+            <!-- confessions section -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <i data-lucide="message-square-dashed"></i>
+                    <h3>Moderate Tea Box Confessions</h3>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Confession Description</th>
+                                <th>Likes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="confessions-table-body">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Quotes section -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <i data-lucide="quote"></i>
+                    <h3>Moderate Floor Quotes</h3>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Quote</th>
+                                <th>Speaker</th>
+                                <th>Context</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quotes-table-body">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Memes section -->
+            <section class="admin-section">
+                <div class="admin-section-header">
+                    <i data-lucide="image"></i>
+                    <h3>Moderate BPO Memes</h3>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Meme Index</th>
+                                <th>Preview</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memes-table-body">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Admin Logic JavaScript -->
+    <script src="admin.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
