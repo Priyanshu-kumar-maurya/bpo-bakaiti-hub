@@ -340,10 +340,15 @@ io.on('connection', (socket) => {
     });
 });
 
-// Run server
-server.listen(PORT, () => {
-    console.log(`===================================================`);
-    console.log(` BPO Vault Real-time Server Running on Port ${PORT}`);
-    console.log(` Access link: http://localhost:${PORT}`);
-    console.log(`===================================================`);
+// Initialize database and run server
+db.init().then(() => {
+    server.listen(PORT, () => {
+        console.log(`===================================================`);
+        console.log(` BPO Vault Real-time Server Running on Port ${PORT}`);
+        console.log(` Access link: http://localhost:${PORT}`);
+        console.log(`===================================================`);
+    });
+}).catch(err => {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
 });

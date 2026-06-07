@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { MongoClient } = require('mongodb');
 
 const DB_PATH = path.join(__dirname, 'db.json');
 
@@ -20,48 +21,92 @@ const initialData = {
     confessions: []
 };
 
-function getNextFriday7AM() {
-    const date = new Date();
-    const resultDate = new Date(date.getTime());
-    resultDate.setDate(date.getDate() + (7 + 5 - date.getDay()) % 7);
-    resultDate.setHours(7, 0, 0, 0);
-    if (resultDate.getTime() <= date.getTime()) {
-        resultDate.setDate(resultDate.getDate() + 7);
+// In-memory state cache
+let state = { ...initialData };
+let mongoClient = null;
+let mongoCollection = null;
+const useMongo = !!process.env.MONGODB_URI;
+
+// Helper to write database state asynchronously in the background
+function saveState() {
+    if (useMongo && mongoCollection) {
+        mongoCollection.replaceOne({ _id: 'bpo_vault_data' }, state, { upsert: true })
+            .catch(err => console.error("Error saving database state to MongoDB:", err));
+    } else {
+        fs.writeFile(DB_PATH, JSON.stringify(state, null, 2), 'utf8', (err) => {
+            if (err) console.error("Error writing local database file:", err);
+        });
     }
-    return resultDate;
 }
 
-// Ensure the db file exists
-if (!fs.existsSync(DB_PATH)) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2));
-}
-
-// Database wrapper functions
 const db = {
-    read() {
-        try {
-            const data = fs.readFileSync(DB_PATH, 'utf8');
-            return JSON.parse(data);
-        } catch (e) {
-            console.error("Error reading database file, resetting to initialData", e);
-            this.write(initialData);
-            return initialData;
+    // Async initialization method to load database state on server start
+    async init() {
+        if (useMongo) {
+            console.log("MongoDB connection URI detected. Connecting to database...");
+            try {
+                mongoClient = new MongoClient(process.env.MONGODB_URI);
+                await mongoClient.connect();
+                console.log("Connected to MongoDB Atlas successfully.");
+                
+                const database = mongoClient.db('bpo_vault_db');
+                mongoCollection = database.collection('vault_store');
+                
+                // Fetch the persistent state document
+                const doc = await mongoCollection.findOne({ _id: 'bpo_vault_data' });
+                if (doc) {
+                    // Remove MongoDB specific _id field when loading state
+                    const { _id, ...cleanState } = doc;
+                    state = cleanState;
+                    console.log("Database state loaded successfully from MongoDB Atlas.");
+                } else {
+                    state = { ...initialData };
+                    await mongoCollection.insertOne({ _id: 'bpo_vault_data', ...state });
+                    console.log("Initialized empty database state in MongoDB Atlas.");
+                }
+            } catch (err) {
+                console.error("Failed to connect to MongoDB Atlas, falling back to local file storage.", err);
+                this.loadLocal();
+            }
+        } else {
+            console.log("No MONGODB_URI environment variable found. Using local db.json file storage.");
+            this.loadLocal();
         }
+    },
+
+    loadLocal() {
+        if (!fs.existsSync(DB_PATH)) {
+            fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), 'utf8');
+            state = { ...initialData };
+        } else {
+            try {
+                const data = fs.readFileSync(DB_PATH, 'utf8');
+                state = JSON.parse(data);
+            } catch (e) {
+                console.error("Error reading local database file, resetting to initialData", e);
+                state = { ...initialData };
+                fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), 'utf8');
+            }
+        }
+    },
+
+    // Synchronous reads and writes from the memory cache
+    read() {
+        return state;
     },
     
     write(data) {
-        fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+        state = data;
+        saveState();
     },
 
     get(table) {
-        const data = this.read();
-        return data[table] || [];
+        return state[table] || [];
     },
 
     set(table, records) {
-        const data = this.read();
-        data[table] = records;
-        this.write(data);
+        state[table] = records;
+        saveState();
     },
 
     // Users
@@ -115,7 +160,6 @@ const db = {
     // Memes
     addMeme(base64Data) {
         const memes = this.get('memes');
-        // Add to the front
         memes.unshift(base64Data);
         this.set('memes', memes);
         return memes;
