@@ -6,8 +6,7 @@
     <title>BPO Vault - Call Center Group Hub</title>
     <!-- Authentication Guard -->
     <script>
-        const token = sessionStorage.getItem('token');
-        if (!token) {
+        if (!sessionStorage.getItem('token')) {
             window.location.href = '/login.html';
         }
     </script>

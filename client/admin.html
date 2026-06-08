@@ -6,12 +6,10 @@
     <title>BPO Vault - Admin Moderation Panel</title>
     <!-- Authentication & Admin Guards -->
     <script>
-        const token = sessionStorage.getItem('token');
-        const isAdmin = sessionStorage.getItem('isAdmin');
-        if (!token) {
+        if (!sessionStorage.getItem('token')) {
             window.location.href = '/login.html';
         }
-        if (isAdmin !== 'true') {
+        if (sessionStorage.getItem('isAdmin') !== 'true') {
             alert("Unauthorized! Redirecting to floor...");
             window.location.href = '/index.html';
         }
