@@ -2,9 +2,9 @@
 const token = sessionStorage.getItem('token');
 
 // Establish socket connection to receive live counts and tables
-const socket = io({
+const socket = typeof io !== 'undefined' ? io({
     auth: { token }
-});
+}) : null;
 
 // Cache elements
 const agentsVal = document.getElementById('stat-agents');
@@ -16,25 +16,27 @@ const quotesTable = document.getElementById('quotes-table-body');
 const memesTable = document.getElementById('memes-table-body');
 
 // On connection or state updates
-socket.on('init_state', (data) => {
-    renderConfessions(data.confessions);
-    renderQuotes(data.quotes);
-    renderMemes(data.memes);
-    fetchStats();
-});
+if (socket) {
+    socket.on('init_state', (data) => {
+        renderConfessions(data.confessions);
+        renderQuotes(data.quotes);
+        renderMemes(data.memes);
+        fetchStats();
+    });
 
-socket.on('update_confessions', (confessions) => {
-    renderConfessions(confessions);
-    fetchStats();
-});
+    socket.on('update_confessions', (confessions) => {
+        renderConfessions(confessions);
+        fetchStats();
+    });
 
-socket.on('update_quotes', (quotes) => {
-    renderQuotes(quotes);
-});
+    socket.on('update_quotes', (quotes) => {
+        renderQuotes(quotes);
+    });
 
-socket.on('update_memes', (memes) => {
-    renderMemes(memes);
-});
+    socket.on('update_memes', (memes) => {
+        renderMemes(memes);
+    });
+}
 
 // Fetch BPO stats from API
 async function fetchStats() {

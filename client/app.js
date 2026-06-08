@@ -10,9 +10,9 @@ const userAvatar = sessionStorage.getItem('avatar');
 const userIsAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
 // Connect to real-time Socket.io server
-const socket = io({
+const socket = typeof io !== 'undefined' ? io({
     auth: { token }
-});
+}) : null;
 
 // App State
 let state = {
@@ -195,86 +195,88 @@ function initTabNavigation() {
 
 // --- Socket Receivers for Real-Time Synchronization ---
 
-socket.on('connect', () => {
-    document.getElementById('floor-status').innerText = "Logged In: Realtime Active";
-    const statusDot = document.querySelector('.status-indicator');
-    statusDot.className = 'status-indicator online';
-});
+if (socket) {
+    socket.on('connect', () => {
+        document.getElementById('floor-status').innerText = "Logged In: Realtime Active";
+        const statusDot = document.querySelector('.status-indicator');
+        statusDot.className = 'status-indicator online';
+    });
 
-socket.on('disconnect', () => {
-    document.getElementById('floor-status').innerText = "Logged Out: Connecting...";
-    const statusDot = document.querySelector('.status-indicator');
-    statusDot.className = 'status-indicator';
-});
+    socket.on('disconnect', () => {
+        document.getElementById('floor-status').innerText = "Logged Out: Connecting...";
+        const statusDot = document.querySelector('.status-indicator');
+        statusDot.className = 'status-indicator';
+    });
 
-socket.on('error_alert', (msg) => {
-    alert(msg);
-});
+    socket.on('error_alert', (msg) => {
+        alert(msg);
+    });
 
-socket.on('init_state', (data) => {
-    state.quotes = data.quotes;
-    state.catchphrases = data.catchphrases;
-    state.memes = data.memes;
-    state.participants = data.participants;
-    state.polls = data.polls;
-    state.countdowns = data.countdowns;
-    state.leaderboard = data.leaderboard;
-    state.profiles = data.profiles;
-    state.confessions = data.confessions;
-    
-    renderQuotes();
-    renderSoundboard();
-    renderMemes();
-    renderWheel();
-    renderPolls();
-    renderCountdowns();
-    renderLeaderboard();
-    renderProfiles();
-    renderConfessions();
-});
+    socket.on('init_state', (data) => {
+        state.quotes = data.quotes;
+        state.catchphrases = data.catchphrases;
+        state.memes = data.memes;
+        state.participants = data.participants;
+        state.polls = data.polls;
+        state.countdowns = data.countdowns;
+        state.leaderboard = data.leaderboard;
+        state.profiles = data.profiles;
+        state.confessions = data.confessions;
+        
+        renderQuotes();
+        renderSoundboard();
+        renderMemes();
+        renderWheel();
+        renderPolls();
+        renderCountdowns();
+        renderLeaderboard();
+        renderProfiles();
+        renderConfessions();
+    });
 
-socket.on('update_quotes', (quotes) => {
-    state.quotes = quotes;
-    renderQuotes();
-});
+    socket.on('update_quotes', (quotes) => {
+        state.quotes = quotes;
+        renderQuotes();
+    });
 
-socket.on('update_catchphrases', (catchphrases) => {
-    state.catchphrases = catchphrases;
-    renderSoundboard();
-});
+    socket.on('update_catchphrases', (catchphrases) => {
+        state.catchphrases = catchphrases;
+        renderSoundboard();
+    });
 
-socket.on('update_memes', (memes) => {
-    state.memes = memes;
-    renderMemes();
-});
+    socket.on('update_memes', (memes) => {
+        state.memes = memes;
+        renderMemes();
+    });
 
-socket.on('update_polls', (polls) => {
-    state.polls = polls;
-    renderPolls();
-});
+    socket.on('update_polls', (polls) => {
+        state.polls = polls;
+        renderPolls();
+    });
 
-socket.on('update_countdowns', (countdowns) => {
-    state.countdowns = countdowns;
-    renderCountdowns();
-});
+    socket.on('update_countdowns', (countdowns) => {
+        state.countdowns = countdowns;
+        renderCountdowns();
+    });
 
-socket.on('update_leaderboard', (leaderboard) => {
-    state.leaderboard = leaderboard;
-    renderLeaderboard();
-});
+    socket.on('update_leaderboard', (leaderboard) => {
+        state.leaderboard = leaderboard;
+        renderLeaderboard();
+    });
 
-socket.on('update_profiles', (profiles) => {
-    state.profiles = profiles;
-    // Also sync wheel names
-    state.participants = profiles.map(u => u.name);
-    renderProfiles();
-    renderWheel();
-});
+    socket.on('update_profiles', (profiles) => {
+        state.profiles = profiles;
+        // Also sync wheel names
+        state.participants = profiles.map(u => u.name);
+        renderProfiles();
+        renderWheel();
+    });
 
-socket.on('update_confessions', (confessions) => {
-    state.confessions = confessions;
-    renderConfessions();
-});
+    socket.on('update_confessions', (confessions) => {
+        state.confessions = confessions;
+        renderConfessions();
+    });
+}
 
 // --- RENDER LOGIC BY MODULE ---
 
@@ -459,24 +461,26 @@ function renderWheelChips() {
 }
 
 // Socket listener for synchronised wheel spins
-socket.on('spin_wheel_start', (data) => {
-    if (isSpinning) return;
-    
-    isSpinning = true;
-    spinTime = 0;
-    spinTimeTotal = data.spinTimeTotal;
-    spinAngleStart = data.spinAngleStart;
-    targetIndex = data.targetIndex;
-    
-    const meta = document.getElementById('wheel-trigger-meta');
-    meta.innerText = `${data.spinner} triggered the wheel spin!`;
-    
-    const banner = document.getElementById('wheel-result-banner');
-    banner.innerText = "Spinning... Synchronizing floor...";
-    banner.style.color = "var(--text-secondary)";
-    
-    rotateWheel();
-});
+if (socket) {
+    socket.on('spin_wheel_start', (data) => {
+        if (isSpinning) return;
+        
+        isSpinning = true;
+        spinTime = 0;
+        spinTimeTotal = data.spinTimeTotal;
+        spinAngleStart = data.spinAngleStart;
+        targetIndex = data.targetIndex;
+        
+        const meta = document.getElementById('wheel-trigger-meta');
+        meta.innerText = `${data.spinner} triggered the wheel spin!`;
+        
+        const banner = document.getElementById('wheel-result-banner');
+        banner.innerText = "Spinning... Synchronizing floor...";
+        banner.style.color = "var(--text-secondary)";
+        
+        rotateWheel();
+    });
+}
 
 let lastTickAngle = 0;
 function rotateWheel() {
